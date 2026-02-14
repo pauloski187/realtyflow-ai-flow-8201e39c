@@ -1,33 +1,55 @@
-export const API_BASE_URL = "https://calm-coats-repeat.loca.lt";
+export const API_BASE_URL = "https://cold-eggs-punch.loca.lt";
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      "bypass-tunnel-reminder": "true",
-      ...options?.headers,
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`API error ${res.status}: ${res.statusText}`);
+  const fullUrl = `${API_BASE_URL}${path}`;
+  const method = options?.method || "GET";
+  
+  console.log(`📡 API Request: ${method} ${fullUrl}`);
+  
+  try {
+    const res = await fetch(fullUrl, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        "bypass-tunnel-reminder": "true",
+        ...options?.headers,
+      },
+    });
+    
+    if (!res.ok) {
+      const errorBody = await res.text();
+      console.error(`❌ API Error: ${method} ${fullUrl}`, {
+        status: res.status,
+        statusText: res.statusText,
+        body: errorBody,
+      });
+      throw new Error(`API error ${res.status}: ${res.statusText}`);
+    }
+    
+    const data = await res.json();
+    console.log(`✅ API Success: ${method} ${fullUrl}`, { status: res.status });
+    return data;
+  } catch (error) {
+    console.error(`❌ API Failed: ${method} ${fullUrl}`, error);
+    throw error;
   }
-  return res.json();
 }
 
 // Typed API helpers
 export const api = {
-  getDashboardStats: () => apiFetch<any>("/api/dashboard/stats"),
+  getDashboardStats: () => apiFetch<any>("/api/analytics/dashboard-stats"),
   getLeadSources: (period = 30) => apiFetch<{ sources: { name: string; count: number }[]; period_days: number }>(`/api/lead-sources?period=${period}`),
   getAiActivity: () => apiFetch<{ activities: AiActivity[] }>("/api/ai-activity"),
   getLeads: (params?: string) => apiFetch<any>(`/api/leads${params ? `?${params}` : ""}`),
   getAppointments: () => apiFetch<any>("/api/appointments"),
-  getAnalytics: () => apiFetch<any>("/api/analytics"),
+  getConversations: () => apiFetch<any>("/api/conversations"),
+  getAnalytics: () => apiFetch<any>("/api/analytics/dashboard-stats"),
   postChat: (message: string, sessionId: string) =>
     apiFetch<{ response: string; session_id: string }>("/api/chat", {
       method: "POST",
       body: JSON.stringify({ message, session_id: sessionId }),
     }),
+  healthCheck: () => apiFetch<{ status: string }>("/health"),
 };
 
 export interface AiActivity {
