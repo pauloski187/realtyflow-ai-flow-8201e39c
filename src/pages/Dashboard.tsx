@@ -1,6 +1,9 @@
-import { TrendingUp, TrendingDown, Flame, CalendarDays, BarChart3, Clock, Target, CalendarCheck } from 'lucide-react';
-import { mockLeads, mockAppointments, mockActivities, type Activity, type LeadStatus, type LeadSource } from '@/data/mockData';
+import { TrendingUp, TrendingDown, Flame, CalendarDays, BarChart3, Clock, Target, CalendarCheck, Mail, RefreshCw, MessageSquare, Calendar } from 'lucide-react';
+import { mockLeads, mockActivities, type LeadStatus, type LeadSource } from '@/data/mockData';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useQuery } from '@tanstack/react-query';
+import { api, type AiActivity } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 const stats = [
   { label: 'Total Leads', value: mockLeads.length, change: '+12%', up: true, icon: TrendingUp, gradient: 'gradient-blue' },
@@ -14,12 +17,6 @@ const lineData = Array.from({ length: 30 }, (_, i) => ({
   leads: Math.floor(Math.random() * 8) + 2,
 }));
 
-const pieData = [
-  { name: 'Gmail', value: mockLeads.filter(l => l.source === 'Gmail').length, color: 'hsl(0, 84%, 60%)' },
-  { name: 'Website', value: mockLeads.filter(l => l.source === 'Website').length, color: 'hsl(224, 64%, 33%)' },
-  { name: 'WhatsApp', value: mockLeads.filter(l => l.source === 'WhatsApp').length, color: 'hsl(160, 84%, 39%)' },
-];
-
 const StatusBadge = ({ status }: { status: LeadStatus }) => {
   const styles = { hot: 'badge-hot', warm: 'badge-warm', cold: 'badge-cold' };
   const emojis = { hot: '🔥', warm: '☀️', cold: '❄️' };
@@ -31,6 +28,136 @@ const SourceBadge = ({ source }: { source: LeadSource }) => {
   return <span className={`${colors[source]} text-xs font-medium px-2 py-0.5 rounded-full`}>{source}</span>;
 };
 
+// ── AI Activity Card ──
+const actionIcons: Record<string, string> = {
+  message_sent: '📧',
+  followup_scheduled: '🔄',
+  appointment_booked: '📅',
+  lead_reengaged: '💬',
+};
+
+const statusStyles: Record<string, string> = {
+  scheduled: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  in_progress: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  completed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+};
+
+function AiActivityCard() {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['ai-activity'],
+    queryFn: () => api.getAiActivity(),
+    refetchInterval: 30000,
+  });
+
+  const activities = data?.activities ?? [];
+
+  return (
+    <div className="glass-card rounded-xl overflow-hidden">
+      <div className="p-5 bg-gradient-to-r from-primary/5 via-primary/3 to-accent/5">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="font-semibold text-foreground text-base">🤖 AI Activity Right Now</h2>
+          {isLoading && <RefreshCw className="w-4 h-4 text-muted-foreground animate-spin" />}
+        </div>
+        <p className="text-xs text-muted-foreground">Your AI is working 24/7</p>
+      </div>
+      <div className="p-4">
+        {isError && (
+          <p className="text-sm text-muted-foreground text-center py-6">⚠️ Could not load activity feed</p>
+        )}
+        {!isLoading && !isError && activities.length === 0 && (
+          <div className="text-center py-8">
+            <p className="text-sm text-muted-foreground">🤖 AI is monitoring for new leads...</p>
+            <p className="text-xs text-muted-foreground mt-1">No recent activity yet.</p>
+          </div>
+        )}
+        <div className="space-y-3">
+          {activities.slice(0, 6).map((a) => (
+            <div key={a.id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0 animate-fade-in">
+              <div className="text-xl shrink-0">{actionIcons[a.action_type] ?? '📧'}</div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-foreground truncate">{a.action}</p>
+                <p className="text-xs text-muted-foreground">{a.lead_name}</p>
+              </div>
+              <div className="flex flex-col items-end gap-1 shrink-0">
+                <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full', statusStyles[a.status] ?? statusStyles.scheduled, a.status === 'in_progress' && 'animate-pulse')}>
+                  {a.status === 'completed' ? '✓ ' : ''}{a.status.replace('_', ' ')}
+                </span>
+                <span className="text-[10px] text-muted-foreground">{a.relative_time}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Lead Sources Donut (API) ──
+const sourceColorMap: Record<string, string> = {
+  gmail: '#EA4335',
+  Gmail: '#EA4335',
+  Website: '#10B981',
+  website: '#10B981',
+  WhatsApp: '#25D366',
+  whatsapp: '#25D366',
+  Unknown: '#6B7280',
+  unknown: '#6B7280',
+};
+
+function LeadSourcesDonut() {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['lead-sources'],
+    queryFn: () => api.getLeadSources(30),
+  });
+
+  const sources = data?.sources ?? [];
+  const total = sources.reduce((sum, s) => sum + s.count, 0);
+  const chartData = sources.map(s => ({
+    name: s.name,
+    value: s.count,
+    color: sourceColorMap[s.name] ?? '#6B7280',
+  }));
+
+  return (
+    <div className="glass-card rounded-xl p-5">
+      <h3 className="font-semibold text-foreground mb-3 text-sm">Lead Sources (Last 30 Days)</h3>
+      {isLoading && <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">Loading...</div>}
+      {isError && <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">⚠️ Could not load data</div>}
+      {!isLoading && !isError && chartData.length > 0 && (
+        <>
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <ResponsiveContainer width="100%" height={180}>
+                <PieChart>
+                  <Pie data={chartData} cx="50%" cy="50%" innerRadius={50} outerRadius={75} dataKey="value" paddingAngle={3}>
+                    {chartData.map((d, i) => <Cell key={i} fill={d.color} />)}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    formatter={(value: number, name: string) => [`${value} leads (${total ? Math.round((value / total) * 100) : 0}%)`, name]}
+                  />
+                  {/* Center total */}
+                  <text x="50%" y="50%" textAnchor="middle" dominantBaseline="central" className="fill-foreground text-xl font-bold">{total}</text>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="space-y-2">
+              {chartData.map((d, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: d.color }} />
+                  <span>{d.name}</span>
+                  <span className="font-medium text-foreground">{d.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Main Dashboard ──
 export default function Dashboard() {
   return (
     <div className="space-y-6 max-w-7xl">
@@ -57,6 +184,9 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+
+      {/* AI Activity Feed */}
+      <AiActivityCard />
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -114,25 +244,8 @@ export default function Dashboard() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className="glass-card rounded-xl p-5">
-            <h3 className="font-semibold text-foreground mb-3 text-sm">Lead Sources</h3>
-            <ResponsiveContainer width="100%" height={160}>
-              <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" innerRadius={40} outerRadius={65} dataKey="value" paddingAngle={3}>
-                  {pieData.map((d, i) => <Cell key={i} fill={d.color} />)}
-                </Pie>
-                <Tooltip contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none' }} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="flex justify-center gap-4 mt-2">
-              {pieData.map((d, i) => (
-                <div key={i} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: d.color }} />
-                  {d.name}
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* API-powered Lead Sources Donut */}
+          <LeadSourcesDonut />
         </div>
       </div>
     </div>

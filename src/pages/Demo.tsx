@@ -3,6 +3,7 @@ import { Send, RotateCcw, Share2, Sparkles, CheckCircle, Search, BarChart3, Cale
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
 
 interface ChatMessage {
   sender: 'lead' | 'ai';
@@ -19,66 +20,62 @@ const scenarios: Record<string, { title: string; lead: string; aiResponse: strin
   booking: {
     title: 'Booking Request',
     lead: "I'm interested in 3BR apartments in Lekki under ₦5M. Can I schedule a viewing for this Saturday at 2 PM?",
-    aiResponse: "Hello! Thank you for your interest in our Lekki properties. I found 3 beautiful 3-bedroom apartments within your budget:\n\n1. 🏠 Sapphire Residences, Lekki Phase 1 — ₦4.5M\n2. 🏠 Ocean Pearl Estate, Ajah-Lekki — ₦3.8M\n3. 🏠 Green Valley Court, Lekki Phase 2 — ₦4.2M\n\nI've checked our calendar — Saturday at 2 PM is available! I've booked a viewing at Sapphire Residences for you. You'll receive a confirmation email shortly with the address and parking details.\n\nWould you like to see the other properties too?",
+    aiResponse: "",
     steps: [
       { icon: CheckCircle, text: '✅ Lead detected and classified', delay: 500 },
-      { icon: Search, text: '🔍 Extracting: Budget (₦5M), Timeline (urgent), Location (Lekki)', delay: 1200 },
-      { icon: BarChart3, text: '📊 Lead Score: 85/100 (HOT 🔥)', delay: 2000 },
+      { icon: Search, text: '🔍 Extracting: Budget, Timeline, Location', delay: 1200 },
+      { icon: BarChart3, text: '📊 Scoring lead...', delay: 2000 },
       { icon: CalendarDays, text: '📅 Checking calendar availability...', delay: 2800 },
-      { icon: CheckCircle, text: '✅ Saturday 2 PM — Available!', delay: 3400 },
-      { icon: CalendarDays, text: '📅 Booking created in Cal.com', delay: 4000 },
-      { icon: Mail, text: '📧 Professional email sent with booking link', delay: 4800 },
-      { icon: Database, text: '💾 Lead saved to CRM', delay: 5500 },
+      { icon: Mail, text: '📧 Generating response...', delay: 3400 },
+      { icon: Database, text: '💾 Saving to CRM', delay: 4000 },
     ],
   },
   question: {
     title: 'Property Question',
     lead: "What's your commission rate? And is the Ikoyi property still available?",
-    aiResponse: "Great question! Our commission structure is transparent:\n\n📋 **Standard Rate**: 5% of property value\n📋 **Premium Service**: 7.5% (includes legal documentation)\n📋 **No hidden fees**\n\nRegarding the Ikoyi property at 12 Bourdillon Road — yes, it's still available! It's a stunning 4-bedroom duplex with:\n• 🛁 4 en-suite bathrooms\n• 🚗 2-car garage\n• 🏊 Swimming pool\n• 🔒 24/7 security\n\nWould you like to schedule a viewing?",
+    aiResponse: "",
     steps: [
       { icon: CheckCircle, text: '✅ Inquiry detected — Q&A type', delay: 500 },
       { icon: Search, text: '🔍 Matching against FAQ database...', delay: 1200 },
-      { icon: Database, text: '💾 Checking property availability in listings...', delay: 2000 },
-      { icon: CheckCircle, text: '✅ Property #IKY-042 — Available', delay: 2800 },
-      { icon: Mail, text: '📧 Personalized response generated', delay: 3600 },
-      { icon: BarChart3, text: '📊 Lead Score: 72/100 (WARM ☀️)', delay: 4200 },
+      { icon: Database, text: '💾 Checking property availability...', delay: 2000 },
+      { icon: Mail, text: '📧 Personalized response generated', delay: 2800 },
     ],
   },
   objection: {
     title: 'Price Objection',
     lead: "₦5M is too expensive for a 3BR in Lekki. Do you have anything cheaper?",
-    aiResponse: "I completely understand your concern! Let me find some great alternatives within a more comfortable budget:\n\n🏠 **Under ₦4M in Lekki area:**\n\n1. **Seaside Apartments, Ajah** — ₦3.2M\n   3BR, modern finish, gated community\n\n2. **Palm View Estate, Sangotedo** — ₦2.8M\n   3BR, newly built, close to Shoprite\n\n3. **Royal Gardens, Lekki Phase 2** — ₦3.5M\n   3BR, serviced apartment, gym included\n\nThese properties offer excellent value! Many of our clients started here and were pleasantly surprised by the quality.\n\nWould you like to explore any of these options?",
+    aiResponse: "",
     steps: [
       { icon: CheckCircle, text: '✅ Objection detected — Price concern', delay: 500 },
       { icon: Search, text: '🔍 Searching lower-budget alternatives...', delay: 1200 },
-      { icon: Database, text: '💾 Found 3 matching properties', delay: 2000 },
+      { icon: Database, text: '💾 Found matching properties', delay: 2000 },
       { icon: Sparkles, text: '✨ Crafting persuasive response...', delay: 2800 },
-      { icon: Mail, text: '📧 Alternative options presented', delay: 3500 },
-      { icon: BarChart3, text: '📊 Lead Score: 65/100 (WARM ☀️)', delay: 4200 },
     ],
   },
   followup: {
     title: 'Follow-up Sequence',
     lead: "I viewed the property last week but haven't decided yet.",
-    aiResponse: "Thank you for letting us know! Making the right decision is important, and we're here to help.\n\nHere's what I can do:\n\n📊 **Market Insight**: Properties in Lekki Phase 1 have appreciated 15% in the last 6 months. The unit you viewed has received 3 other inquiries this week.\n\n💡 **Flexible Options**:\n• Payment plan available (up to 12 months)\n• Virtual re-tour available anytime\n• I can arrange a second viewing with our senior agent\n\n⏰ **Special Offer**: If you decide within 48 hours, we can lock in the current price and waive the inspection fee (₦150K savings).\n\nNo pressure at all — shall I send you the detailed property report to help with your decision?",
+    aiResponse: "",
     steps: [
       { icon: CheckCircle, text: '✅ Follow-up scenario detected', delay: 500 },
       { icon: Database, text: '💾 Pulling viewing history...', delay: 1200 },
-      { icon: BarChart3, text: '📊 Analyzing market data for comparison...', delay: 2000 },
+      { icon: BarChart3, text: '📊 Analyzing market data...', delay: 2000 },
       { icon: Sparkles, text: '✨ Generating persuasive follow-up...', delay: 2800 },
-      { icon: Mail, text: '📧 Urgency-based response crafted', delay: 3600 },
-      { icon: CalendarDays, text: '📅 Follow-up reminder set for 48 hours', delay: 4400 },
     ],
   },
 };
 
 const exampleMessages = [
-  "I'm interested in 3BR apartments in Lekki under ₦5M",
+  "I'm looking for a 3-bedroom house in Austin, Texas. My budget is $500,000.",
   "Can I schedule a viewing for this Saturday at 2 PM?",
   "What's your commission rate?",
   "Is the property still available?",
   "₦5M is too expensive, any cheaper options?",
 ];
+
+function generateSessionId() {
+  return `demo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 export default function Demo() {
   const [activeTab, setActiveTab] = useState('booking');
@@ -87,35 +84,57 @@ export default function Demo() {
   const [input, setInput] = useState('');
   const [typing, setTyping] = useState(false);
   const [started, setStarted] = useState(false);
+  const [sessionId, setSessionId] = useState(generateSessionId);
   const chatRef = useRef<HTMLDivElement>(null);
+  const stepsTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const scenario = scenarios[activeTab];
 
   const resetDemo = () => {
+    stepsTimers.current.forEach(clearTimeout);
+    stepsTimers.current = [];
     setMessages([]);
     setSteps(0);
     setTyping(false);
     setStarted(false);
     setInput('');
+    setSessionId(generateSessionId());
+  };
+
+  const sendToBackend = async (userMessage: string) => {
+    setStarted(true);
+    setMessages(prev => [...prev, { sender: 'lead', text: userMessage }]);
+
+    // Animate behind-the-scenes steps
+    scenario.steps.forEach((step, i) => {
+      const t = setTimeout(() => setSteps(i + 1), step.delay);
+      stepsTimers.current.push(t);
+    });
+
+    // Show typing after steps finish
+    const lastDelay = scenario.steps.length > 0 ? scenario.steps[scenario.steps.length - 1].delay + 500 : 500;
+    const t = setTimeout(() => setTyping(true), lastDelay);
+    stepsTimers.current.push(t);
+
+    try {
+      const data = await api.postChat(userMessage, sessionId);
+      setTyping(false);
+      // Make sure all steps are shown
+      setSteps(scenario.steps.length);
+      setMessages(prev => [...prev, { sender: 'ai', text: data.response }]);
+    } catch (err) {
+      setTyping(false);
+      setSteps(scenario.steps.length);
+      setMessages(prev => [...prev, { sender: 'ai', text: '⚠️ Could not reach the AI backend. Please check the connection and try again.' }]);
+      toast({ title: 'Connection Error', description: 'Failed to reach the backend API.', variant: 'destructive' });
+    }
   };
 
   const runScenario = (customMessage?: string) => {
     resetDemo();
-    setStarted(true);
-    const leadMsg = customMessage || scenario.lead;
-    setMessages([{ sender: 'lead', text: leadMsg }]);
-
-    // Animate steps
-    scenario.steps.forEach((step, i) => {
-      setTimeout(() => setSteps(i + 1), step.delay);
-    });
-
-    // AI typing then response
-    setTimeout(() => setTyping(true), scenario.steps.length > 0 ? scenario.steps[scenario.steps.length - 1].delay + 500 : 1000);
-    setTimeout(() => {
-      setTyping(false);
-      setMessages(prev => [...prev, { sender: 'ai', text: scenario.aiResponse }]);
-    }, scenario.steps.length > 0 ? scenario.steps[scenario.steps.length - 1].delay + 2500 : 3000);
+    const msg = customMessage || scenario.lead;
+    // Small delay so reset completes
+    setTimeout(() => sendToBackend(msg), 50);
   };
 
   useEffect(() => {
@@ -128,8 +147,13 @@ export default function Demo() {
 
   const handleSend = () => {
     if (!input.trim()) return;
-    runScenario(input.trim());
+    const msg = input.trim();
     setInput('');
+    if (!started) {
+      runScenario(msg);
+    } else {
+      sendToBackend(msg);
+    }
   };
 
   return (
@@ -161,6 +185,7 @@ export default function Demo() {
                 <div className="px-4 py-3 border-b border-border flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-success animate-pulse" />
                   <span className="text-sm font-semibold text-foreground">Lead Chat</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground">Connected to AI Backend</span>
                 </div>
                 <div ref={chatRef} className="flex-1 overflow-y-auto p-4 space-y-3">
                   {!started && (
@@ -202,7 +227,7 @@ export default function Demo() {
                       placeholder="Try it yourself..."
                       className="flex-1 px-3 py-2 text-sm rounded-lg bg-muted border-0 focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground"
                     />
-                    <button onClick={handleSend} className="p-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 shrink-0">
+                    <button onClick={handleSend} disabled={typing} className="p-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 shrink-0 disabled:opacity-50">
                       <Send className="w-4 h-4" />
                     </button>
                   </div>
@@ -245,6 +270,12 @@ export default function Demo() {
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <div className="w-4 h-4 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
                           <span className="text-xs">Processing...</span>
+                        </div>
+                      )}
+                      {typing && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <div className="w-4 h-4 border-2 border-primary/40 border-t-primary rounded-full animate-spin" />
+                          <span className="text-xs">AI is composing response...</span>
                         </div>
                       )}
                     </div>
