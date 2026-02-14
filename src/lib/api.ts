@@ -1,4 +1,4 @@
-export const API_BASE_URL = "https://cold-eggs-punch.loca.lt";
+export const API_BASE_URL = "https://modern-wolves-beg.loca.lt";
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const fullUrl = `${API_BASE_URL}${path}`;
