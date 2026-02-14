@@ -1,4 +1,4 @@
-export const API_BASE_URL = "https://edt-grant-length-fresh.trycloudflare.com";
+export const API_BASE_URL = "https://internationally-enquiries-aquatic-thickness.trycloudflare.com";
 
 export async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const fullUrl = `${API_BASE_URL}${path}`;
