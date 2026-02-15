@@ -1,18 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Menu, Moon, Sun } from 'lucide-react';
+import { Menu, Moon, Sun, Wifi, WifiOff } from 'lucide-react';
 import AppSidebar from './AppSidebar';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api';
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dark, setDark] = useState(false);
+  const [backendStatus, setBackendStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+  const [backendError, setBackendError] = useState<string | null>(null);
 
   const toggleDark = () => {
     setDark(!dark);
     document.documentElement.classList.toggle('dark');
   };
+
+  useEffect(() => {
+    api.healthCheck()
+      .then((data) => {
+        if (data.status === 'healthy') {
+          setBackendStatus('connected');
+        } else {
+          setBackendStatus('disconnected');
+          setBackendError(`Unexpected status: ${data.status}`);
+        }
+      })
+      .catch((err) => {
+        setBackendStatus('disconnected');
+        setBackendError(err.message);
+      });
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -32,7 +51,25 @@ export default function AppLayout() {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <div className="hidden lg:block" />
+
+          {/* Backend status */}
+          <div className="hidden lg:flex items-center gap-2 text-xs">
+            {backendStatus === 'checking' && (
+              <span className="text-muted-foreground">Checking backend…</span>
+            )}
+            {backendStatus === 'connected' && (
+              <span className="flex items-center gap-1.5 text-success">
+                <Wifi className="w-3.5 h-3.5" /> Connected
+              </span>
+            )}
+            {backendStatus === 'disconnected' && (
+              <span className="flex items-center gap-1.5 text-destructive" title={backendError ?? ''}>
+                <WifiOff className="w-3.5 h-3.5" /> Disconnected
+                {backendError && <span className="max-w-[200px] truncate text-[10px] text-destructive/70">— {backendError}</span>}
+              </span>
+            )}
+          </div>
+
           <button
             onClick={toggleDark}
             className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
