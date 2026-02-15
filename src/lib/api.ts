@@ -133,6 +133,9 @@ export const api = {
   getConversations: () =>
     apiFetch<any>("/api/conversations"),
 
+  getConversationThread: (leadId: number) =>
+    apiFetch<any>(`/api/conversations/${leadId}`),
+
   // Legacy aliases
   getLeads: async (params?: string): Promise<{ leads: Lead[] }> => {
     const raw = await apiFetch<any[]>(`/api/leads${params ? `?${params}` : ""}`);
