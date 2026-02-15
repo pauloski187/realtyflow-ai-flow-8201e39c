@@ -44,6 +44,28 @@ export async function apiFetch<T>(
   return data;
 }
 
+// ── Normalize raw API lead to frontend Lead shape ──
+function normalizeLead(raw: any): Lead {
+  return {
+    id: String(raw.id),
+    name: raw.name ?? '',
+    email: raw.email ?? '',
+    phone: raw.phone ?? '',
+    source: (raw.source ?? '').replace('SourceChannelEnum.', ''),
+    status: raw.temperature ?? raw.status ?? 'cold',
+    timeline: raw.timeline ?? '',
+    budget: raw.budget_max ?? raw.budget_min ?? 0,
+    location: (raw.preferred_neighborhoods ?? []).join(', ') || '',
+    createdAt: raw.stage_changed_at ?? raw.last_contact_at ?? '',
+    score: raw.qualification_status === 'fully_qualified' ? 90 : raw.qualification_status === 'partially_qualified' ? 50 : 20,
+    stage: raw.current_stage ?? 'new',
+    propertyInterest: raw.must_have_features ? String(raw.must_have_features) : '',
+    bedrooms: raw.bedrooms ?? 0,
+    notes: raw.notes ?? '',
+    conversations: [],
+  };
+}
+
 // ── Typed API helpers ──
 
 export const api = {
@@ -58,33 +80,37 @@ export const api = {
       body: JSON.stringify({ message, session_id: sessionId }),
     }),
 
-  // Leads
-  listLeads: (filters?: { status?: string; skip?: number; limit?: number }) => {
+  // Leads — API returns a flat array, normalize to { leads: Lead[] }
+  listLeads: async (filters?: { status?: string; skip?: number; limit?: number }): Promise<{ leads: Lead[] }> => {
     const params = new URLSearchParams();
     if (filters?.status) params.set("status", filters.status);
     if (filters?.skip != null) params.set("skip", String(filters.skip));
     if (filters?.limit != null) params.set("limit", String(filters.limit));
     const qs = params.toString();
-    return apiFetch<{ leads: Lead[] }>(`/api/leads${qs ? `?${qs}` : ""}`);
+    const raw = await apiFetch<any[]>(`/api/leads${qs ? `?${qs}` : ""}`);
+    const arr = Array.isArray(raw) ? raw : (raw as any).leads ?? [];
+    return { leads: arr.map(normalizeLead) };
   },
 
-  getLead: (id: string) =>
-    apiFetch<Lead>(`/api/leads/${id}`),
+  getLead: async (id: string): Promise<Lead> => {
+    const raw = await apiFetch<any>(`/api/leads/${id}`);
+    return normalizeLead(raw);
+  },
 
   updateLead: (id: string, patch: Partial<Lead>) =>
-    apiFetch<Lead>(`/api/leads/${id}`, {
+    apiFetch<any>(`/api/leads/${id}`, {
       method: "PATCH",
       body: JSON.stringify(patch),
     }),
 
   updateLeadStatus: (id: string, status: "hot" | "warm" | "cold") =>
-    apiFetch<Lead>(`/api/leads/${id}/status`, {
+    apiFetch<any>(`/api/leads/${id}/status`, {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
 
   addLeadNote: (id: string, notes: string) =>
-    apiFetch<Lead>(`/api/leads/${id}/notes`, {
+    apiFetch<any>(`/api/leads/${id}/notes`, {
       method: "POST",
       body: JSON.stringify({ notes }),
     }),
@@ -94,24 +120,25 @@ export const api = {
     apiFetch<any>("/api/analytics/dashboard-stats"),
 
   getLeadSources: (period = 30) =>
-    apiFetch<{ sources: { name: string; count: number }[]; period_days: number }>(
-      `/api/lead-sources?period=${period}`
-    ),
+    apiFetch<any>(`/api/lead-sources?period=${period}`),
 
   getAiActivity: () =>
-    apiFetch<{ activities: AiActivity[] }>("/api/ai-activity"),
+    apiFetch<any>("/api/ai-activity"),
 
   // Appointments
   getAppointments: () =>
-    apiFetch<{ appointments: Appointment[] }>("/api/appointments"),
+    apiFetch<any>("/api/appointments"),
 
   // Conversations
   getConversations: () =>
     apiFetch<any>("/api/conversations"),
 
-  // Legacy aliases (so existing pages keep working without changes)
-  getLeads: (params?: string) =>
-    apiFetch<{ leads: Lead[] }>(`/api/leads${params ? `?${params}` : ""}`),
+  // Legacy aliases
+  getLeads: async (params?: string): Promise<{ leads: Lead[] }> => {
+    const raw = await apiFetch<any[]>(`/api/leads${params ? `?${params}` : ""}`);
+    const arr = Array.isArray(raw) ? raw : (raw as any).leads ?? [];
+    return { leads: arr.map(normalizeLead) };
+  },
 
   postChat: (message: string, sessionId: string) =>
     apiFetch<{ response: string; session_id: string }>("/api/chat", {

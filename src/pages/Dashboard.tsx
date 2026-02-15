@@ -59,21 +59,28 @@ function AiActivityCard() {
           </div>
         )}
         <div className="space-y-3">
-          {activities.slice(0, 6).map((a) => (
+          {activities.slice(0, 6).map((a: any) => {
+            const actionType = a.action_type ?? a.type ?? 'message_sent';
+            const leadName = a.lead_name ?? a.description ?? '';
+            const action = a.action ?? a.title ?? '';
+            const relativeTime = a.relative_time ?? (a.timestamp ? new Date(a.timestamp).toLocaleTimeString() : '');
+            const status = a.status ?? 'completed';
+            return (
             <div key={a.id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0 animate-fade-in">
-              <div className="text-xl shrink-0">{actionIcons[a.action_type] ?? '📧'}</div>
+              <div className="text-xl shrink-0">{actionIcons[actionType] ?? '📧'}</div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-foreground truncate">{a.action}</p>
-                <p className="text-xs text-muted-foreground">{a.lead_name}</p>
+                <p className="text-sm text-foreground truncate">{action}</p>
+                <p className="text-xs text-muted-foreground">{leadName}</p>
               </div>
               <div className="flex flex-col items-end gap-1 shrink-0">
-                <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full', statusStyles[a.status] ?? statusStyles.scheduled, a.status === 'in_progress' && 'animate-pulse')}>
-                  {a.status === 'completed' ? '✓ ' : ''}{a.status.replace('_', ' ')}
+                <span className={cn('text-[10px] font-medium px-2 py-0.5 rounded-full', statusStyles[status] ?? statusStyles.scheduled, status === 'in_progress' && 'animate-pulse')}>
+                  {status === 'completed' ? '✓ ' : ''}{status.replace('_', ' ')}
                 </span>
-                <span className="text-[10px] text-muted-foreground">{a.relative_time}</span>
+                <span className="text-[10px] text-muted-foreground">{relativeTime}</span>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
@@ -99,10 +106,10 @@ function LeadSourcesDonut() {
   });
 
   const sources = data?.sources ?? [];
-  const total = sources.reduce((sum, s) => sum + s.count, 0);
-  const chartData = sources.map(s => ({
+  const total = sources.reduce((sum: number, s: any) => sum + (s.count ?? s.value ?? 0), 0);
+  const chartData = sources.map((s: any) => ({
     name: s.name,
-    value: s.count,
+    value: s.count ?? s.value ?? 0,
     color: sourceColorMap[s.name] ?? '#6B7280',
   }));
 
