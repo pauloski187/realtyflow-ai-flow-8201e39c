@@ -7,6 +7,7 @@ import {
   MessageCircle,
   CalendarDays,
   PlayCircle,
+  UserCircle,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -21,6 +22,7 @@ const navItems = [
   { label: 'Conversations', icon: MessageCircle, path: '/conversations' },
   { label: 'Appointments', icon: CalendarDays, path: '/appointments' },
   { label: 'Demo', icon: PlayCircle, path: '/demo' },
+  { label: 'Profile', icon: UserCircle, path: '/profile' },
   { label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
