@@ -267,7 +267,17 @@ export default function Leads() {
                     placeholder="Add notes about this lead..."
                     className="w-full h-32 p-3 text-sm rounded-lg bg-muted/50 border border-border focus:outline-none focus:ring-2 focus:ring-ring text-foreground resize-none placeholder:text-muted-foreground"
                   />
-                  <button className="mt-2 px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity" onClick={() => toast({ title: 'Saved', description: 'Notes updated successfully.' })}>
+                  <button className="mt-2 px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity" onClick={async () => {
+                    const textarea = document.querySelector<HTMLTextAreaElement>('textarea[placeholder="Add notes about this lead..."]');
+                    if (textarea && selectedLead) {
+                      try {
+                        await api.addLeadNote(selectedLead.id, textarea.value);
+                        toast({ title: 'Saved', description: 'Notes updated successfully.' });
+                      } catch {
+                        toast({ title: 'Error', description: 'Could not save notes.', variant: 'destructive' });
+                      }
+                    }
+                  }}>
                     Save Notes
                   </button>
                 </TabsContent>
