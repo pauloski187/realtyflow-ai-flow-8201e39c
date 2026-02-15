@@ -136,6 +136,34 @@ export const api = {
   getConversationThread: (leadId: number) =>
     apiFetch<any>(`/api/conversations/${leadId}`),
 
+  // Profile
+  getProfile: () =>
+    apiFetch<any>("/api/profile"),
+
+  updateProfile: (data: any) =>
+    apiFetch<any>("/api/profile", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+
+  uploadProfilePhoto: (base64Data: string) =>
+    apiFetch<{ photo_url: string }>("/api/profile/photo", {
+      method: "POST",
+      body: JSON.stringify({ photo: base64Data }),
+    }),
+
+  updateAiSettings: (settings: any) =>
+    apiFetch<any>("/api/profile/ai-settings", {
+      method: "PUT",
+      body: JSON.stringify(settings),
+    }),
+
+  updateNotificationSettings: (settings: any) =>
+    apiFetch<any>("/api/profile/notifications", {
+      method: "PUT",
+      body: JSON.stringify(settings),
+    }),
+
   // Legacy aliases
   getLeads: async (params?: string): Promise<{ leads: Lead[] }> => {
     const raw = await apiFetch<any[]>(`/api/leads${params ? `?${params}` : ""}`);
