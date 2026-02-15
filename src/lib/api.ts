@@ -40,8 +40,8 @@ export const api = {
   getDashboardStats: () => apiFetch<any>("/api/analytics/dashboard-stats"),
   getLeadSources: (period = 30) => apiFetch<{ sources: { name: string; count: number }[]; period_days: number }>(`/api/lead-sources?period=${period}`),
   getAiActivity: () => apiFetch<{ activities: AiActivity[] }>("/api/ai-activity"),
-  getLeads: (params?: string) => apiFetch<any>(`/api/leads${params ? `?${params}` : ""}`),
-  getAppointments: () => apiFetch<any>("/api/appointments"),
+  getLeads: (params?: string) => apiFetch<{ leads: Lead[] }>(`/api/leads${params ? `?${params}` : ""}`),
+  getAppointments: () => apiFetch<{ appointments: Appointment[] }>("/api/appointments"),
   getConversations: () => apiFetch<any>("/api/conversations"),
   getAnalytics: () => apiFetch<any>("/api/analytics/dashboard-stats"),
   postChat: (message: string, sessionId: string) =>
@@ -51,6 +51,36 @@ export const api = {
     }),
   healthCheck: () => apiFetch<{ status: string }>("/health"),
 };
+
+export interface Lead {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  source: string;
+  status: string;
+  timeline: string;
+  budget: number;
+  location: string;
+  createdAt: string;
+  score: number;
+  stage: string;
+  propertyInterest: string;
+  bedrooms: number;
+  notes: string;
+  conversations: { sender: string; message: string; timestamp: string }[];
+}
+
+export interface Appointment {
+  id: string;
+  leadName: string;
+  propertyAddress: string;
+  dateTime: string;
+  status: string;
+  reminder24h: boolean;
+  reminder1h: boolean;
+  notes: string;
+}
 
 export interface AiActivity {
   id: number;

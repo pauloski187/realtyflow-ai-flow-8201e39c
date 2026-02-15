@@ -1,31 +1,19 @@
-import { TrendingUp, TrendingDown, Flame, CalendarDays, BarChart3, Clock, Target, CalendarCheck, Mail, RefreshCw, MessageSquare, Calendar } from 'lucide-react';
-import { mockLeads, mockActivities, type LeadStatus, type LeadSource } from '@/data/mockData';
+import { TrendingUp, TrendingDown, Flame, CalendarDays, BarChart3, Clock, Target, CalendarCheck, RefreshCw } from 'lucide-react';
+import { type LeadStatus, type LeadSource } from '@/data/mockData';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { api, type AiActivity } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
-const stats = [
-  { label: 'Total Leads', value: mockLeads.length, change: '+12%', up: true, icon: TrendingUp, gradient: 'gradient-blue' },
-  { label: 'Hot Leads', value: mockLeads.filter(l => l.status === 'hot').length, change: '🔥', up: true, icon: Flame, gradient: 'gradient-red' },
-  { label: 'Appointments Today', value: 3, change: '', up: true, icon: CalendarDays, gradient: 'gradient-green' },
-  { label: 'Response Rate', value: '94%', change: '+2%', up: true, icon: BarChart3, gradient: 'gradient-purple' },
-];
-
-const lineData = Array.from({ length: 30 }, (_, i) => ({
-  day: `Day ${i + 1}`,
-  leads: Math.floor(Math.random() * 8) + 2,
-}));
-
-const StatusBadge = ({ status }: { status: LeadStatus }) => {
-  const styles = { hot: 'badge-hot', warm: 'badge-warm', cold: 'badge-cold' };
-  const emojis = { hot: '🔥', warm: '☀️', cold: '❄️' };
-  return <span className={`${styles[status]} text-xs font-medium px-2 py-0.5 rounded-full`}>{emojis[status]} {status.charAt(0).toUpperCase() + status.slice(1)}</span>;
+const StatusBadge = ({ status }: { status: string }) => {
+  const styles: Record<string, string> = { hot: 'badge-hot', warm: 'badge-warm', cold: 'badge-cold' };
+  const emojis: Record<string, string> = { hot: '🔥', warm: '☀️', cold: '❄️' };
+  return <span className={`${styles[status] ?? 'badge-cold'} text-xs font-medium px-2 py-0.5 rounded-full`}>{emojis[status] ?? '❄️'} {status.charAt(0).toUpperCase() + status.slice(1)}</span>;
 };
 
-const SourceBadge = ({ source }: { source: LeadSource }) => {
-  const colors: Record<LeadSource, string> = { Gmail: 'bg-destructive/10 text-destructive', Website: 'bg-primary/10 text-primary', WhatsApp: 'bg-success/10 text-success' };
-  return <span className={`${colors[source]} text-xs font-medium px-2 py-0.5 rounded-full`}>{source}</span>;
+const SourceBadge = ({ source }: { source: string }) => {
+  const colors: Record<string, string> = { Gmail: 'bg-destructive/10 text-destructive', Website: 'bg-primary/10 text-primary', WhatsApp: 'bg-success/10 text-success' };
+  return <span className={`${colors[source] ?? 'bg-muted text-muted-foreground'} text-xs font-medium px-2 py-0.5 rounded-full`}>{source}</span>;
 };
 
 // ── AI Activity Card ──
@@ -136,7 +124,6 @@ function LeadSourcesDonut() {
                     contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                     formatter={(value: number, name: string) => [`${value} leads (${total ? Math.round((value / total) * 100) : 0}%)`, name]}
                   />
-                  {/* Center total */}
                   <text x="50%" y="50%" textAnchor="middle" dominantBaseline="central" className="fill-foreground text-xl font-bold">{total}</text>
                 </PieChart>
               </ResponsiveContainer>
@@ -159,6 +146,38 @@ function LeadSourcesDonut() {
 
 // ── Main Dashboard ──
 export default function Dashboard() {
+  const { data: statsData, isLoading: statsLoading } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: () => api.getDashboardStats(),
+  });
+
+  const { data: leadsData } = useQuery({
+    queryKey: ['leads'],
+    queryFn: () => api.getLeads(),
+  });
+
+  const leads = leadsData?.leads ?? [];
+  const totalLeads = statsData?.total_leads ?? leads.length;
+  const hotLeads = statsData?.hot_leads ?? leads.filter(l => l.status === 'hot').length;
+  const appointmentsToday = statsData?.appointments_today ?? 0;
+  const responseRate = statsData?.response_rate ?? '—';
+
+  const stats = [
+    { label: 'Total Leads', value: totalLeads, change: statsData?.total_leads_change ?? '', up: true, icon: TrendingUp, gradient: 'gradient-blue' },
+    { label: 'Hot Leads', value: hotLeads, change: '🔥', up: true, icon: Flame, gradient: 'gradient-red' },
+    { label: 'Appointments Today', value: appointmentsToday, change: '', up: true, icon: CalendarDays, gradient: 'gradient-green' },
+    { label: 'Response Rate', value: responseRate, change: statsData?.response_rate_change ?? '', up: true, icon: BarChart3, gradient: 'gradient-purple' },
+  ];
+
+  // Generate line data from real leads if available
+  const lineData = Array.from({ length: 30 }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (29 - i));
+    const dayStr = date.toISOString().split('T')[0];
+    const count = leads.filter(l => l.createdAt?.startsWith(dayStr)).length;
+    return { day: `Day ${i + 1}`, leads: count };
+  });
+
   return (
     <div className="space-y-6 max-w-7xl">
       <div>
@@ -179,7 +198,7 @@ export default function Dashboard() {
                 </span>
               )}
             </div>
-            <div className="text-3xl font-bold">{s.value}</div>
+            <div className="text-3xl font-bold">{statsLoading ? '...' : s.value}</div>
             <div className="text-sm opacity-80 mt-1">{s.label}</div>
           </div>
         ))}
@@ -191,43 +210,46 @@ export default function Dashboard() {
       {/* Quick Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Conversion Rate', value: '23%', icon: Target },
-          { label: 'Avg Response Time', value: '4.2s', icon: Clock },
-          { label: 'Appointments This Week', value: '12', icon: CalendarCheck },
-          { label: 'Appointments This Month', value: '47', icon: CalendarDays },
+          { label: 'Conversion Rate', value: statsData?.conversion_rate ?? '—', icon: Target },
+          { label: 'Avg Response Time', value: statsData?.avg_response_time ?? '—', icon: Clock },
+          { label: 'Appointments This Week', value: statsData?.appointments_week ?? '—', icon: CalendarCheck },
+          { label: 'Appointments This Month', value: statsData?.appointments_month ?? '—', icon: CalendarDays },
         ].map((s, i) => (
           <div key={i} className="glass-card rounded-xl p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
               <s.icon className="w-4 h-4" />
               <span className="text-xs font-medium">{s.label}</span>
             </div>
-            <div className="text-2xl font-bold text-foreground">{s.value}</div>
+            <div className="text-2xl font-bold text-foreground">{statsLoading ? '...' : s.value}</div>
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Activity Feed */}
+        {/* Recent Leads */}
         <div className="lg:col-span-2 glass-card rounded-xl p-5">
-          <h2 className="font-semibold text-foreground mb-4">Recent Activity</h2>
+          <h2 className="font-semibold text-foreground mb-4">Recent Leads</h2>
           <div className="space-y-3">
-            {mockActivities.map((a) => (
-              <div key={a.id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
+            {leads.slice(0, 10).map((l) => (
+              <div key={l.id} className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
-                  {a.leadName.split(' ').map(n => n[0]).join('')}
+                  {l.name.split(' ').map(n => n[0]).join('')}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-foreground truncate">
-                    <span className="font-medium">{a.leadName}</span> {a.action}
+                    <span className="font-medium">{l.name}</span> — {l.propertyInterest}
                   </p>
-                  <p className="text-xs text-muted-foreground">{a.timeAgo}</p>
+                  <p className="text-xs text-muted-foreground">{l.email}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <SourceBadge source={a.source} />
-                  <StatusBadge status={a.status} />
+                  <SourceBadge source={l.source} />
+                  <StatusBadge status={l.status} />
                 </div>
               </div>
             ))}
+            {leads.length === 0 && !statsLoading && (
+              <p className="text-sm text-muted-foreground text-center py-6">No leads yet.</p>
+            )}
           </div>
         </div>
 
@@ -244,7 +266,6 @@ export default function Dashboard() {
               </LineChart>
             </ResponsiveContainer>
           </div>
-          {/* API-powered Lead Sources Donut */}
           <LeadSourcesDonut />
         </div>
       </div>
