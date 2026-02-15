@@ -111,7 +111,7 @@ function ConversationList({
     if (!search) return conversations;
     const q = search.toLowerCase();
     return conversations.filter(c =>
-      c.lead_name.toLowerCase().includes(q) || c.lead_email.toLowerCase().includes(q)
+      (c.lead_name ?? '').toLowerCase().includes(q) || (c.lead_email ?? '').toLowerCase().includes(q)
     );
   }, [conversations, search]);
 
@@ -145,11 +145,11 @@ function ConversationList({
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2.5 min-w-0">
                 <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
-                  {c.lead_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  {(c.lead_name ?? '?').split(' ').map(n => n[0]).join('').slice(0, 2)}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm text-foreground truncate">{c.lead_name}</span>
+                    <span className="font-semibold text-sm text-foreground truncate">{c.lead_name ?? 'Unknown Lead'}</span>
                     <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full', tempBadgeClass(c.lead_temperature))}>
                       {c.lead_temperature?.toUpperCase()}
                     </span>
@@ -214,11 +214,11 @@ function MessageThread({ leadId, onBack }: { leadId: number; onBack: () => void 
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">
-            {lead.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+            {(lead.name ?? '?').split(' ').map(n => n[0]).join('').slice(0, 2)}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h3 className="font-bold text-foreground truncate">{lead.name}</h3>
+              <h3 className="font-bold text-foreground truncate">{lead.name ?? 'Unknown Lead'}</h3>
               <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full', tempBadgeClass(lead.temperature))}>
                 {lead.temperature?.toUpperCase()}
               </span>
@@ -317,7 +317,9 @@ export default function Conversations() {
 
   const conversations = useMemo(() => {
     const list = Array.isArray(data) ? data : [];
-    return [...list].sort((a, b) => new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime());
+    return [...list]
+      .filter(c => c != null)
+      .sort((a, b) => new Date(b.last_message_time ?? 0).getTime() - new Date(a.last_message_time ?? 0).getTime());
   }, [data]);
 
   // On mobile, show either list or thread
