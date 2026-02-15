@@ -1,21 +1,23 @@
 import { useState, useMemo } from 'react';
 import { Search, Filter, Download, RefreshCw, Eye, MessageSquare, Mail, Phone, CalendarDays, Trash2, X } from 'lucide-react';
-import { mockLeads, formatNaira, type Lead, type LeadStatus, type LeadSource } from '@/data/mockData';
+import { formatNaira, type LeadStatus, type LeadSource } from '@/data/mockData';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { toast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import { api, type Lead } from '@/lib/api';
 
-const StatusBadge = ({ status }: { status: LeadStatus }) => {
-  const styles = { hot: 'badge-hot', warm: 'badge-warm', cold: 'badge-cold' };
-  const emojis = { hot: '🔥', warm: '☀️', cold: '❄️' };
-  return <span className={`${styles[status]} text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap`}>{emojis[status]} {status.charAt(0).toUpperCase() + status.slice(1)}</span>;
+const StatusBadge = ({ status }: { status: string }) => {
+  const styles: Record<string, string> = { hot: 'badge-hot', warm: 'badge-warm', cold: 'badge-cold' };
+  const emojis: Record<string, string> = { hot: '🔥', warm: '☀️', cold: '❄️' };
+  return <span className={`${styles[status] ?? 'badge-cold'} text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap`}>{emojis[status] ?? '❄️'} {status.charAt(0).toUpperCase() + status.slice(1)}</span>;
 };
 
-const SourceBadge = ({ source }: { source: LeadSource }) => {
-  const colors: Record<LeadSource, string> = { Gmail: 'bg-destructive/10 text-destructive', Website: 'bg-primary/10 text-primary', WhatsApp: 'bg-success/10 text-success' };
-  return <span className={`${colors[source]} text-xs font-medium px-2 py-0.5 rounded-full`}>{source}</span>;
+const SourceBadge = ({ source }: { source: string }) => {
+  const colors: Record<string, string> = { Gmail: 'bg-destructive/10 text-destructive', Website: 'bg-primary/10 text-primary', WhatsApp: 'bg-success/10 text-success' };
+  return <span className={`${colors[source] ?? 'bg-muted text-muted-foreground'} text-xs font-medium px-2 py-0.5 rounded-full`}>{source}</span>;
 };
 
 function timeAgo(dateStr: string) {
@@ -29,19 +31,26 @@ function timeAgo(dateStr: string) {
 
 export default function Leads() {
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | LeadStatus>('all');
-  const [sourceFilter, setSourceFilter] = useState<'all' | LeadSource>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['leads'],
+    queryFn: () => api.getLeads(),
+  });
+
+  const leads = data?.leads ?? [];
+
   const filtered = useMemo(() => {
-    return mockLeads.filter(l => {
+    return leads.filter((l: Lead) => {
       if (search && !l.name.toLowerCase().includes(search.toLowerCase()) && !l.email.toLowerCase().includes(search.toLowerCase())) return false;
       if (statusFilter !== 'all' && l.status !== statusFilter) return false;
       if (sourceFilter !== 'all' && l.source !== sourceFilter) return false;
       return true;
     });
-  }, [search, statusFilter, sourceFilter]);
+  }, [leads, search, statusFilter, sourceFilter]);
 
   const toggleSelect = (id: string) => {
     const next = new Set(selected);
@@ -61,6 +70,9 @@ export default function Leads() {
     toast({ title: 'Exported!', description: `${filtered.length} leads exported to CSV.` });
   };
 
+  if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Loading leads...</div>;
+  if (isError) return <div className="flex items-center justify-center py-20 text-muted-foreground">⚠️ Could not load leads. Check backend connection.</div>;
+
   return (
     <div className="space-y-4 max-w-7xl">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -72,7 +84,7 @@ export default function Leads() {
           <button onClick={exportCSV} className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg bg-card border border-border hover:bg-muted transition-colors text-foreground">
             <Download className="w-4 h-4" /> Export
           </button>
-          <button className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg bg-card border border-border hover:bg-muted transition-colors text-foreground">
+          <button onClick={() => refetch()} className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg bg-card border border-border hover:bg-muted transition-colors text-foreground">
             <RefreshCw className="w-4 h-4" /> Refresh
           </button>
         </div>
@@ -89,13 +101,13 @@ export default function Leads() {
             className="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-card border border-border focus:outline-none focus:ring-2 focus:ring-ring text-foreground placeholder:text-muted-foreground"
           />
         </div>
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as any)} className="px-3 py-2 text-sm rounded-lg bg-card border border-border text-foreground focus:outline-none">
+        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2 text-sm rounded-lg bg-card border border-border text-foreground focus:outline-none">
           <option value="all">All Status</option>
           <option value="hot">🔥 Hot</option>
           <option value="warm">☀️ Warm</option>
           <option value="cold">❄️ Cold</option>
         </select>
-        <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value as any)} className="px-3 py-2 text-sm rounded-lg bg-card border border-border text-foreground focus:outline-none">
+        <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)} className="px-3 py-2 text-sm rounded-lg bg-card border border-border text-foreground focus:outline-none">
           <option value="all">All Sources</option>
           <option value="Gmail">Gmail</option>
           <option value="Website">Website</option>
@@ -236,7 +248,7 @@ export default function Leads() {
 
                 <TabsContent value="conversation" className="mt-4">
                   <div className="space-y-3">
-                    {selectedLead.conversations.map((msg, i) => (
+                    {(selectedLead.conversations ?? []).map((msg, i) => (
                       <div key={i} className={cn('flex', msg.sender === 'lead' ? 'justify-start' : 'justify-end')}>
                         <div className={cn('max-w-[80%] rounded-xl px-4 py-2.5', msg.sender === 'lead' ? 'bg-muted text-foreground' : 'bg-primary text-primary-foreground')}>
                           <p className="text-sm">{msg.message}</p>

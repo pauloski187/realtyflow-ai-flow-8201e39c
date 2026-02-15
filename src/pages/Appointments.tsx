@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { mockAppointments, type Appointment, type AppointmentStatus } from '@/data/mockData';
+import { type AppointmentStatus } from '@/data/mockData';
 import { CalendarDays, List, CheckCircle2, Clock, XCircle, AlertCircle, Eye, Pencil, Mail, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import { api, type Appointment } from '@/lib/api';
 
-const statusConfig: Record<AppointmentStatus, { label: string; icon: typeof CheckCircle2; className: string }> = {
+const statusConfig: Record<string, { label: string; icon: typeof CheckCircle2; className: string }> = {
   confirmed: { label: 'Confirmed', icon: CheckCircle2, className: 'bg-success/10 text-success' },
   pending: { label: 'Pending', icon: Clock, className: 'bg-warning/10 text-warning' },
   cancelled: { label: 'Cancelled', icon: XCircle, className: 'bg-destructive/10 text-destructive' },
@@ -21,18 +23,25 @@ function formatTime(dateStr: string) {
   return new Date(dateStr).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
-const todayCount = mockAppointments.filter(a => {
-  const d = new Date(a.dateTime);
-  const today = new Date();
-  return d.toDateString() === today.toDateString();
-}).length;
-
 export default function Appointments() {
   const [view, setView] = useState<'list' | 'calendar'>('list');
   const [filter, setFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
   const [selectedApt, setSelectedApt] = useState<Appointment | null>(null);
 
-  const filtered = mockAppointments.filter(a => {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['appointments'],
+    queryFn: () => api.getAppointments(),
+  });
+
+  const appointments = data?.appointments ?? [];
+
+  const todayCount = appointments.filter(a => {
+    const d = new Date(a.dateTime);
+    const today = new Date();
+    return d.toDateString() === today.toDateString();
+  }).length;
+
+  const filtered = appointments.filter(a => {
     if (filter === 'all') return true;
     const d = new Date(a.dateTime);
     const now = new Date();
@@ -44,6 +53,9 @@ export default function Appointments() {
 
   const upcoming = filtered.filter(a => new Date(a.dateTime) >= new Date() && a.status !== 'cancelled');
   const past = filtered.filter(a => new Date(a.dateTime) < new Date() || a.status === 'cancelled' || a.status === 'completed');
+
+  if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Loading appointments...</div>;
+  if (isError) return <div className="flex items-center justify-center py-20 text-muted-foreground">⚠️ Could not load appointments.</div>;
 
   return (
     <div className="space-y-4 max-w-7xl">
@@ -75,7 +87,6 @@ export default function Appointments() {
 
       {view === 'list' ? (
         <div className="space-y-6">
-          {/* Upcoming */}
           {upcoming.length > 0 && (
             <div>
               <h2 className="text-sm font-semibold text-foreground mb-3">Upcoming</h2>
@@ -93,7 +104,7 @@ export default function Appointments() {
                   </thead>
                   <tbody>
                     {upcoming.map(apt => {
-                      const cfg = statusConfig[apt.status];
+                      const cfg = statusConfig[apt.status] ?? statusConfig.pending;
                       return (
                         <tr key={apt.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors cursor-pointer" onClick={() => setSelectedApt(apt)}>
                           <td className="p-3 font-medium text-foreground">{apt.leadName}</td>
@@ -125,7 +136,6 @@ export default function Appointments() {
             </div>
           )}
 
-          {/* Past */}
           {past.length > 0 && (
             <div>
               <h2 className="text-sm font-semibold text-muted-foreground mb-3">Past</h2>
@@ -133,7 +143,7 @@ export default function Appointments() {
                 <table className="w-full text-sm">
                   <tbody>
                     {past.map(apt => {
-                      const cfg = statusConfig[apt.status];
+                      const cfg = statusConfig[apt.status] ?? statusConfig.pending;
                       return (
                         <tr key={apt.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors cursor-pointer" onClick={() => setSelectedApt(apt)}>
                           <td className="p-3 font-medium text-foreground">{apt.leadName}</td>
@@ -154,7 +164,6 @@ export default function Appointments() {
           )}
         </div>
       ) : (
-        /* Calendar View - simplified monthly grid */
         <div className="glass-card rounded-xl p-6">
           <div className="text-center mb-4">
             <h2 className="text-lg font-semibold text-foreground">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
@@ -171,16 +180,19 @@ export default function Appointments() {
               for (let i = 0; i < firstDay; i++) cells.push(<div key={`empty-${i}`} />);
               for (let d = 1; d <= daysInMonth; d++) {
                 const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const dayApts = mockAppointments.filter(a => a.dateTime.startsWith(dateStr));
+                const dayApts = appointments.filter(a => a.dateTime.startsWith(dateStr));
                 const isToday = d === now.getDate();
                 cells.push(
                   <div key={d} className={cn('min-h-[60px] p-1 rounded-lg border border-transparent', isToday && 'border-primary bg-primary/5')}>
                     <span className={cn('text-xs font-medium', isToday ? 'text-primary' : 'text-foreground')}>{d}</span>
-                    {dayApts.map(a => (
-                      <div key={a.id} className={cn('text-[10px] px-1 py-0.5 rounded mt-0.5 truncate cursor-pointer', statusConfig[a.status].className)} onClick={() => setSelectedApt(a)}>
-                        {a.leadName.split(' ')[0]}
-                      </div>
-                    ))}
+                    {dayApts.map(a => {
+                      const cfg = statusConfig[a.status] ?? statusConfig.pending;
+                      return (
+                        <div key={a.id} className={cn('text-[10px] px-1 py-0.5 rounded mt-0.5 truncate cursor-pointer', cfg.className)} onClick={() => setSelectedApt(a)}>
+                          {a.leadName.split(' ')[0]}
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               }
@@ -193,29 +205,32 @@ export default function Appointments() {
       {/* Detail Modal */}
       <Dialog open={!!selectedApt} onOpenChange={() => setSelectedApt(null)}>
         <DialogContent>
-          {selectedApt && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="text-foreground">{selectedApt.leadName}</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3 mt-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div><p className="text-xs text-muted-foreground">Property</p><p className="text-sm text-foreground">{selectedApt.propertyAddress}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Date & Time</p><p className="text-sm text-foreground">{formatDate(selectedApt.dateTime)} at {formatTime(selectedApt.dateTime)}</p></div>
-                  <div><p className="text-xs text-muted-foreground">Status</p><span className={cn('inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full', statusConfig[selectedApt.status].className)}>{statusConfig[selectedApt.status].label}</span></div>
-                  <div><p className="text-xs text-muted-foreground">ID</p><p className="text-sm font-mono text-muted-foreground">{selectedApt.id}</p></div>
+          {selectedApt && (() => {
+            const cfg = statusConfig[selectedApt.status] ?? statusConfig.pending;
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="text-foreground">{selectedApt.leadName}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3 mt-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><p className="text-xs text-muted-foreground">Property</p><p className="text-sm text-foreground">{selectedApt.propertyAddress}</p></div>
+                    <div><p className="text-xs text-muted-foreground">Date & Time</p><p className="text-sm text-foreground">{formatDate(selectedApt.dateTime)} at {formatTime(selectedApt.dateTime)}</p></div>
+                    <div><p className="text-xs text-muted-foreground">Status</p><span className={cn('inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full', cfg.className)}>{cfg.label}</span></div>
+                    <div><p className="text-xs text-muted-foreground">ID</p><p className="text-sm font-mono text-muted-foreground">{selectedApt.id}</p></div>
+                  </div>
+                  {selectedApt.notes && (
+                    <div><p className="text-xs text-muted-foreground">Notes</p><p className="text-sm text-foreground">{selectedApt.notes}</p></div>
+                  )}
+                  <div className="flex gap-2 pt-3 border-t border-border">
+                    <button className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-accent text-accent-foreground hover:opacity-90" onClick={() => toast({ title: 'Reschedule', description: 'Coming soon!' })}><Pencil className="w-4 h-4" /> Reschedule</button>
+                    <button className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90" onClick={() => toast({ title: 'Reminder sent!', description: 'Email reminder sent to lead.' })}><Mail className="w-4 h-4" /> Send Reminder</button>
+                    <button className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20" onClick={() => toast({ title: 'Cancelled', description: 'Appointment cancelled.' })}><XCircle className="w-4 h-4" /> Cancel</button>
+                  </div>
                 </div>
-                {selectedApt.notes && (
-                  <div><p className="text-xs text-muted-foreground">Notes</p><p className="text-sm text-foreground">{selectedApt.notes}</p></div>
-                )}
-                <div className="flex gap-2 pt-3 border-t border-border">
-                  <button className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-accent text-accent-foreground hover:opacity-90" onClick={() => toast({ title: 'Reschedule', description: 'Coming soon!' })}><Pencil className="w-4 h-4" /> Reschedule</button>
-                  <button className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90" onClick={() => toast({ title: 'Reminder sent!', description: 'Email reminder sent to lead.' })}><Mail className="w-4 h-4" /> Send Reminder</button>
-                  <button className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20" onClick={() => toast({ title: 'Cancelled', description: 'Appointment cancelled.' })}><XCircle className="w-4 h-4" /> Cancel</button>
-                </div>
-              </div>
-            </>
-          )}
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
