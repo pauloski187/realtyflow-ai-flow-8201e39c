@@ -362,7 +362,7 @@ export default function FollowUps() {
                               <Clock className="w-3.5 h-3.5" /> Snooze <ChevronDown className="w-3 h-3" />
                             </button>
                             {snoozeOpen === f.id && (
-                              <div className="absolute top-full left-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-10 min-w-[120px] py-1 animate-fade-in">
+                              <div className="absolute bottom-full left-0 mb-1 bg-card border border-border rounded-lg shadow-lg z-50 min-w-[120px] py-1 animate-fade-in">
                                 {[1, 3, 7].map(d => (
                                   <button
                                     key={d}
