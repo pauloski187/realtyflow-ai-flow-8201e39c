@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +22,7 @@ const navItems = [
   { label: 'Pipeline', icon: Columns3, path: '/pipeline' },
   { label: 'Conversations', icon: MessageCircle, path: '/conversations' },
   { label: 'Appointments', icon: CalendarDays, path: '/appointments' },
+  { label: 'Follow-Ups', icon: Clock, path: '/follow-ups' },
   { label: 'Demo', icon: PlayCircle, path: '/demo' },
   { label: 'Profile', icon: UserCircle, path: '/profile' },
   { label: 'Settings', icon: Settings, path: '/settings' },

@@ -164,6 +164,25 @@ export const api = {
       body: JSON.stringify(settings),
     }),
 
+  // Follow-ups
+  getFollowUpStats: () =>
+    apiFetch<any>("/api/follow-ups/stats"),
+
+  getFollowUps: () =>
+    apiFetch<any[]>("/api/follow-ups?status=pending"),
+
+  sendFollowUp: (id: number) =>
+    apiFetch<any>(`/api/follow-ups/${id}/send`, { method: "POST" }),
+
+  completeFollowUp: (id: number) =>
+    apiFetch<any>(`/api/follow-ups/${id}/complete`, { method: "PUT" }),
+
+  snoozeFollowUp: (id: number, days: number) =>
+    apiFetch<any>(`/api/follow-ups/${id}/snooze`, {
+      method: "PUT",
+      body: JSON.stringify({ days }),
+    }),
+
   // Legacy aliases
   getLeads: async (params?: string): Promise<{ leads: Lead[] }> => {
     const raw = await apiFetch<any[]>(`/api/leads${params ? `?${params}` : ""}`);

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import {
   User, Mail, Phone, Briefcase, Globe, Camera, Loader2, CheckCircle2, AlertCircle,
-  Linkedin, Instagram, Twitter, Facebook, Shield, Bell, Bot, Save
+  Linkedin, Instagram, Twitter, Facebook, Shield, Bell, Bot, Save, Trash2
 } from 'lucide-react';
 
 // ── Types ──
@@ -281,6 +281,17 @@ export default function Profile() {
                 <p className="font-medium text-foreground mb-1">Profile Photo</p>
                 <p>JPG, PNG or WebP. Max 2MB.</p>
                 {photoMutation.isPending && <p className="text-primary mt-1 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> Uploading…</p>}
+                {form.photo_url && (
+                  <button
+                    onClick={() => {
+                      updateField('photo_url', '');
+                      toast({ title: 'Photo removed' });
+                    }}
+                    className="mt-2 flex items-center gap-1.5 text-xs text-destructive hover:text-destructive/80 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> Remove photo
+                  </button>
+                )}
               </div>
             </div>
 
