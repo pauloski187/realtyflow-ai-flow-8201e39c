@@ -184,8 +184,8 @@ export default function Demo() {
               <div className="glass-card rounded-xl flex flex-col h-[520px]">
                 <div className="px-4 py-3 border-b border-border flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-success animate-pulse" />
-                  <span className="text-sm font-semibold text-foreground">Lead Chat</span>
-                  <span className="ml-auto text-[10px] text-muted-foreground">Connected to AI Backend</span>
+                   <span className="text-sm font-semibold text-foreground select-none">Lead Chat</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground select-none">Connected to AI Backend</span>
                 </div>
                 <div ref={chatRef} className="flex-1 overflow-y-auto p-4 space-y-3">
                   {!started && (
@@ -200,7 +200,7 @@ export default function Demo() {
                     <div key={i} className={cn('flex', msg.sender === 'lead' ? 'justify-start' : 'justify-end')} style={{ animation: 'slideUp 0.3s ease-out' }}>
                       <div className={cn('max-w-[85%] rounded-2xl px-4 py-3', msg.sender === 'lead' ? 'bg-muted text-foreground rounded-bl-md' : 'bg-primary text-primary-foreground rounded-br-md')}>
                         <p className="text-sm whitespace-pre-line">{msg.text}</p>
-                        <p className={cn('text-[10px] mt-1.5', msg.sender === 'lead' ? 'text-muted-foreground' : 'text-primary-foreground/60')}>
+                        <p className={cn('text-[10px] mt-1.5 select-none', msg.sender === 'lead' ? 'text-muted-foreground' : 'text-primary-foreground/60')}>
                           {msg.sender === 'lead' ? '👤 Lead' : '🤖 RealtyFlow AI'}
                         </p>
                       </div>
@@ -244,7 +244,7 @@ export default function Demo() {
               {/* RIGHT: Behind the Scenes */}
               <div className="glass-card rounded-xl flex flex-col h-[520px]">
                 <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-                  <span className="text-sm font-semibold text-foreground">⚡ Behind the Scenes</span>
+                  <span className="text-sm font-semibold text-foreground select-none">⚡ Behind the Scenes</span>
                   <div className="flex gap-2">
                     <button onClick={resetDemo} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"><RotateCcw className="w-3.5 h-3.5" /></button>
                     <button onClick={() => { navigator.clipboard.writeText(window.location.href); toast({ title: 'Link copied!' }); }} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"><Share2 className="w-3.5 h-3.5" /></button>
@@ -261,7 +261,7 @@ export default function Demo() {
                             <step.icon className="w-3.5 h-3.5 text-success" />
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm text-foreground">{step.text}</p>
+                            <p className="text-sm text-foreground select-none">{step.text}</p>
                             <p className="text-[10px] text-muted-foreground mt-0.5">{((step.delay / 1000) + 0.2).toFixed(1)}s</p>
                           </div>
                         </div>
