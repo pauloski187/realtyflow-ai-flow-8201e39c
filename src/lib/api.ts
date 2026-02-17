@@ -1,6 +1,6 @@
 // ── Environment-based API client ──
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+  import.meta.env.VITE_API_BASE_URL || "https://ai-sales-rep-for-real-estate-pns1.onrender.com";
 
 /**
  * Generic fetch wrapper — every request goes through here.
