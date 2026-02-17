@@ -54,8 +54,8 @@ export default function Appointments() {
   const upcoming = filtered.filter(a => new Date(a.dateTime) >= new Date() && a.status !== 'cancelled');
   const past = filtered.filter(a => new Date(a.dateTime) < new Date() || a.status === 'cancelled' || a.status === 'completed');
 
-  if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Loading appointments...</div>;
-  if (isError) return <div className="flex items-center justify-center py-20 text-destructive">⚠️ Request failed on /api/appointments</div>;
+  if (isLoading && appointments.length === 0) return <div className="flex items-center justify-center py-20 text-muted-foreground">Loading appointments...</div>;
+  if (isError && appointments.length === 0) return <div className="flex items-center justify-center py-20 text-destructive">⚠️ Request failed on /api/appointments</div>;
 
   return (
     <div className="space-y-4 max-w-7xl">

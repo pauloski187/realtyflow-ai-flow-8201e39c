@@ -342,7 +342,7 @@ export default function Conversations() {
             <div className="flex items-center justify-center flex-1 gap-2 text-muted-foreground">
               <Loader2 className="w-5 h-5 animate-spin" /> Loading…
             </div>
-          ) : isError ? (
+          ) : isError && conversations.length === 0 ? (
             <div className="flex items-center justify-center flex-1 text-destructive">⚠️ Request failed on /api/conversations</div>
           ) : (
             <ConversationList

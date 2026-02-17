@@ -247,7 +247,7 @@ export default function FollowUps() {
         <div className="space-y-4">
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-40 rounded-xl" />)}
         </div>
-      ) : isError ? (
+      ) : isError && items.length === 0 ? (
         <div className="glass-card rounded-xl p-8 text-center">
           <p className="text-destructive mb-3">⚠️ Request failed on /api/follow-ups</p>
           <button onClick={() => refetch()} className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground">Retry</button>

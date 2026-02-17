@@ -58,8 +58,8 @@ export default function Pipeline() {
     e.dataTransfer.dropEffect = 'move';
   };
 
-  if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Loading pipeline...</div>;
-  if (isError) return <div className="flex items-center justify-center py-20 text-muted-foreground">⚠️ Could not load pipeline data.</div>;
+  if (isLoading && apiLeads.length === 0) return <div className="flex items-center justify-center py-20 text-muted-foreground">Loading pipeline...</div>;
+  if (isError && apiLeads.length === 0) return <div className="flex items-center justify-center py-20 text-muted-foreground">⚠️ Could not load pipeline data.</div>;
 
   return (
     <div className="space-y-4">
