@@ -38,6 +38,9 @@ function AiActivityCard() {
   });
 
   const activities = data?.activities ?? [];
+  const hasData = activities.length > 0;
+  const showError = isError && !hasData && !isLoading;
+  const showEmpty = !isLoading && !showError && !hasData;
 
   return (
     <div className="glass-card rounded-xl overflow-hidden">
@@ -49,10 +52,10 @@ function AiActivityCard() {
         <p className="text-xs text-muted-foreground">Your AI is working 24/7</p>
       </div>
       <div className="p-4">
-        {isError && activities.length === 0 && (
+        {showError && (
           <p className="text-sm text-destructive text-center py-6">⚠️ Request failed on /api/ai-activity</p>
         )}
-        {!isLoading && !isError && activities.length === 0 && (
+        {showEmpty && (
           <div className="text-center py-8">
             <p className="text-sm text-muted-foreground">🤖 AI is monitoring for new leads...</p>
             <p className="text-xs text-muted-foreground mt-1">No recent activity yet.</p>
