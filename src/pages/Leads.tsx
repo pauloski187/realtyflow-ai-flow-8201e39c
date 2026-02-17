@@ -71,7 +71,7 @@ export default function Leads() {
   };
 
   if (isLoading) return <div className="flex items-center justify-center py-20 text-muted-foreground">Loading leads...</div>;
-  if (isError) return <div className="flex items-center justify-center py-20 text-muted-foreground">⚠️ Could not load leads. Check backend connection.</div>;
+  if (isError) return <div className="flex items-center justify-center py-20 text-destructive">⚠️ Request failed on /api/leads — check backend connection.</div>;
 
   return (
     <div className="space-y-4 max-w-7xl">

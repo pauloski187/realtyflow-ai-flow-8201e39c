@@ -64,8 +64,7 @@ export default function AppLayout() {
             )}
             {backendStatus === 'disconnected' && (
               <span className="flex items-center gap-1.5 text-destructive" title={backendError ?? ''}>
-                <WifiOff className="w-3.5 h-3.5" /> Disconnected
-                {backendError && <span className="max-w-[200px] truncate text-[10px] text-destructive/70">— {backendError}</span>}
+                <WifiOff className="w-3.5 h-3.5" /> {backendError ? `Request failed: ${backendError}` : 'Disconnected'}
               </span>
             )}
           </div>

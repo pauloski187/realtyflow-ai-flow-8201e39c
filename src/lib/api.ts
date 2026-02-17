@@ -18,14 +18,25 @@ export async function apiFetch<T>(
 
   console.log(`📡 API Request: ${method} ${fullUrl}`);
 
-  const res = await fetch(fullUrl, {
-    ...options,
-    credentials: "omit",
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(fullUrl, {
+      ...options,
+      credentials: "omit",
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+      },
+    });
+  } catch (networkErr) {
+    console.error(`❌ Network Error: ${method} ${fullUrl}`, networkErr);
+    const err = new Error(
+      `Request failed: network error on ${path}`
+    );
+    (err as any).status = 0;
+    (err as any).endpoint = path;
+    throw err;
+  }
 
   if (!res.ok) {
     const errorBody = await res.text();
@@ -34,12 +45,22 @@ export async function apiFetch<T>(
       statusText: res.statusText,
       body: errorBody,
     });
-    throw new Error(
-      `API error ${res.status}: ${res.statusText} — ${errorBody}`
+    const err = new Error(
+      `Request failed: ${res.status} on ${path}`
     );
+    (err as any).status = res.status;
+    (err as any).endpoint = path;
+    (err as any).body = errorBody;
+    throw err;
   }
 
-  const data = await res.json();
+  let data: T;
+  try {
+    data = await res.json();
+  } catch {
+    console.error(`❌ JSON parse error: ${method} ${fullUrl}`);
+    throw new Error(`Request failed: invalid JSON on ${path}`);
+  }
   console.log(`✅ API Success: ${method} ${fullUrl}`, { status: res.status });
   return data;
 }

@@ -249,7 +249,7 @@ export default function FollowUps() {
         </div>
       ) : isError ? (
         <div className="glass-card rounded-xl p-8 text-center">
-          <p className="text-muted-foreground mb-3">⚠️ Could not load follow-ups.</p>
+          <p className="text-destructive mb-3">⚠️ Request failed on /api/follow-ups</p>
           <button onClick={() => refetch()} className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground">Retry</button>
         </div>
       ) : items.length === 0 ? (
