@@ -7,25 +7,25 @@
 @layer base {
   :root {
     --background: 210 20% 98%;
-    --foreground: 224 64% 15%;
+    --foreground: 224 71% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 224 64% 15%;
+    --card-foreground: 224 71% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 224 64% 15%;
+    --popover-foreground: 224 71% 15%;
 
-    --primary: 224 64% 33%;
+    --primary: 224 76% 40%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 20% 94%;
-    --secondary-foreground: 224 64% 20%;
+    --secondary-foreground: 224 71% 20%;
 
     --muted: 210 15% 93%;
     --muted-foreground: 215 16% 47%;
 
-    --accent: 38 92% 50%;
-    --accent-foreground: 224 64% 15%;
+    --accent: 37 90% 44%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -34,31 +34,31 @@
     --success-foreground: 0 0% 100%;
 
     --warning: 45 93% 56%;
-    --warning-foreground: 224 64% 15%;
+    --warning-foreground: 224 71% 15%;
 
     --hot: 0 84% 60%;
     --hot-foreground: 0 0% 100%;
 
-    --warm: 38 92% 50%;
-    --warm-foreground: 224 64% 15%;
+    --warm: 37 90% 44%;
+    --warm-foreground: 224 71% 15%;
 
     --cold: 210 80% 55%;
     --cold-foreground: 0 0% 100%;
 
     --border: 214 20% 90%;
     --input: 214 20% 90%;
-    --ring: 224 64% 33%;
+    --ring: 224 76% 40%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 224 64% 15%;
+    --sidebar-background: 224 71% 13%;
     --sidebar-foreground: 210 20% 90%;
-    --sidebar-primary: 38 92% 50%;
-    --sidebar-primary-foreground: 224 64% 15%;
+    --sidebar-primary: 37 90% 44%;
+    --sidebar-primary-foreground: 224 71% 13%;
     --sidebar-accent: 224 50% 22%;
     --sidebar-accent-foreground: 210 20% 95%;
     --sidebar-border: 224 50% 25%;
-    --sidebar-ring: 38 92% 50%;
+    --sidebar-ring: 37 90% 44%;
     --sidebar-muted: 224 40% 30%;
   }
 
@@ -130,7 +130,7 @@
 
 @layer utilities {
   .gradient-blue {
-    background: linear-gradient(135deg, hsl(224 64% 33%), hsl(224 64% 45%));
+    background: linear-gradient(135deg, hsl(224 76% 40%), hsl(224 64% 52%));
   }
   .gradient-red {
     background: linear-gradient(135deg, hsl(0 84% 55%), hsl(20 80% 55%));
@@ -142,22 +142,22 @@
     background: linear-gradient(135deg, hsl(270 60% 50%), hsl(280 60% 60%));
   }
   .gradient-gold {
-    background: linear-gradient(135deg, hsl(38 92% 50%), hsl(45 93% 56%));
+    background: linear-gradient(135deg, hsl(37 90% 44%), hsl(45 93% 56%));
   }
   .glass-card {
     @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-sm;
   }
   .stat-card {
-    @apply rounded-xl p-5 text-white shadow-lg transition-transform duration-200 hover:scale-[1.02];
+    @apply rounded-xl p-6 text-white shadow-lg transition-all duration-200 hover:scale-[1.02] hover:shadow-xl;
   }
   .kanban-column {
     @apply bg-muted/50 rounded-xl p-3 min-h-[400px] flex flex-col gap-2;
   }
   .kanban-card {
-    @apply bg-card rounded-lg p-3 shadow-sm border border-border/50 cursor-grab active:cursor-grabbing transition-shadow hover:shadow-md;
+    @apply bg-card rounded-xl p-4 shadow-sm border border-border/50 cursor-grab active:cursor-grabbing transition-all hover:shadow-md hover:-translate-y-0.5;
   }
   .badge-hot {
-    @apply bg-hot/15 text-hot border border-hot/20;
+    @apply bg-hot/15 text-hot border border-hot/20 animate-pulse-dot;
   }
   .badge-warm {
     @apply bg-warm/15 text-warm border border-warm/20;
