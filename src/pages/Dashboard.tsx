@@ -50,7 +50,7 @@ function AiActivityCard() {
       </div>
       <div className="p-4">
         {isError && (
-          <p className="text-sm text-muted-foreground text-center py-6">⚠️ Could not load activity feed</p>
+          <p className="text-sm text-destructive text-center py-6">⚠️ Request failed on /api/ai-activity</p>
         )}
         {!isLoading && !isError && activities.length === 0 && (
           <div className="text-center py-8">
@@ -117,7 +117,7 @@ function LeadSourcesDonut() {
     <div className="glass-card rounded-xl p-5">
       <h3 className="font-semibold text-foreground mb-3 text-sm">Lead Sources (Last 30 Days)</h3>
       {isLoading && <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">Loading...</div>}
-      {isError && <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">⚠️ Could not load data</div>}
+      {isError && <div className="h-[200px] flex items-center justify-center text-destructive text-sm">⚠️ Request failed on /api/lead-sources</div>}
       {!isLoading && !isError && chartData.length > 0 && (
         <>
           <div className="flex items-center gap-4">

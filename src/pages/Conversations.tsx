@@ -188,7 +188,7 @@ function MessageThread({ leadId, onBack }: { leadId: number; onBack: () => void 
     </div>
   );
   if (isError || !data) return (
-    <div className="flex items-center justify-center h-full text-muted-foreground">⚠️ Could not load thread.</div>
+    <div className="flex items-center justify-center h-full text-destructive">⚠️ Request failed on /api/conversations/{leadId}</div>
   );
 
   const { lead, messages } = data;
@@ -343,7 +343,7 @@ export default function Conversations() {
               <Loader2 className="w-5 h-5 animate-spin" /> Loading…
             </div>
           ) : isError ? (
-            <div className="flex items-center justify-center flex-1 text-muted-foreground">⚠️ Could not load conversations.</div>
+            <div className="flex items-center justify-center flex-1 text-destructive">⚠️ Request failed on /api/conversations</div>
           ) : (
             <ConversationList
               conversations={conversations}
