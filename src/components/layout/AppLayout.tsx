@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Menu, Moon, Sun, Wifi, WifiOff } from 'lucide-react';
 import AppSidebar from './AppSidebar';
 import { cn } from '@/lib/utils';
-import { api } from '@/lib/api';
+import { api, API_BASE_URL } from '@/lib/api';
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -63,7 +63,7 @@ export default function AppLayout() {
               </span>
             )}
             {backendStatus === 'disconnected' && (
-              <span className="flex items-center gap-1.5 text-destructive" title={backendError ?? ''}>
+              <span className="flex items-center gap-1.5 text-destructive" title={`${backendError ?? ''} | API: ${API_BASE_URL}`}>
                 <WifiOff className="w-3.5 h-3.5" /> {backendError ? `Request failed: ${backendError}` : 'Disconnected'}
               </span>
             )}
