@@ -6,6 +6,10 @@ const ENV_API_BASE_URL =
   DEFAULT_API_BASE_URL;
 
 export const API_BASE_URL = String(ENV_API_BASE_URL).replace(/\/+$/, "");
+const REQUEST_TIMEOUT_MS = 60000;
+const MAX_RETRIES = 2;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Generic fetch wrapper — every request goes through here.
@@ -24,23 +28,54 @@ export async function apiFetch<T>(
 
   console.log(`📡 API Request: ${method} ${fullUrl}`);
 
-  let res: Response;
-  try {
-    res = await fetch(fullUrl, {
-      ...options,
-      credentials: "omit",
-      headers: {
-        "Content-Type": "application/json",
-        ...options?.headers,
-      },
-    });
-  } catch (networkErr) {
-    console.error(`❌ Network Error: ${method} ${fullUrl}`, networkErr);
-    const err = new Error(
-      `Request failed: network error on ${path}`
-    );
+  const canRetry = method.toUpperCase() === "GET";
+  let res: Response | null = null;
+  let lastErr: unknown;
+  const attempts = canRetry ? MAX_RETRIES + 1 : 1;
+
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    try {
+      res = await fetch(fullUrl, {
+        ...options,
+        signal: controller.signal,
+        credentials: "omit",
+        headers: {
+          "Content-Type": "application/json",
+          ...options?.headers,
+        },
+      });
+    } catch (networkErr) {
+      lastErr = networkErr;
+      console.error(`❌ Network Error: ${method} ${fullUrl} (attempt ${attempt + 1}/${attempts})`, networkErr);
+      if (attempt < attempts - 1) {
+        await sleep(800 * (attempt + 1));
+        continue;
+      }
+      const err = new Error(`Request failed: network/timeout error on ${path}`);
+      (err as any).status = 0;
+      (err as any).endpoint = path;
+      throw err;
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (res.ok) break;
+
+    if (attempt < attempts - 1 && [502, 503, 504].includes(res.status)) {
+      await sleep(1000 * (attempt + 1));
+      continue;
+    }
+
+    break;
+  }
+
+  if (!res) {
+    const err = new Error(`Request failed: network/timeout error on ${path}`);
     (err as any).status = 0;
     (err as any).endpoint = path;
+    (err as any).cause = lastErr;
     throw err;
   }
 
