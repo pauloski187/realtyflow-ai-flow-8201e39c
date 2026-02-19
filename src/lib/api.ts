@@ -143,11 +143,12 @@ export const api = {
     }),
 
   // Leads — API returns a flat array, normalize to { leads: Lead[] }
-  listLeads: async (filters?: { status?: string; skip?: number; limit?: number }): Promise<{ leads: Lead[] }> => {
+  listLeads: async (filters?: { status?: string; skip?: number; limit?: number; demo_only?: boolean }): Promise<{ leads: Lead[] }> => {
     const params = new URLSearchParams();
     if (filters?.status) params.set("status", filters.status);
     if (filters?.skip != null) params.set("skip", String(filters.skip));
     if (filters?.limit != null) params.set("limit", String(filters.limit));
+    params.set("demo_only", String(filters?.demo_only ?? true));
     const qs = params.toString();
     const raw = await apiFetch<any[]>(`/api/leads${qs ? `?${qs}` : ""}`);
     const arr = Array.isArray(raw) ? raw : (raw as any).leads ?? [];
@@ -247,7 +248,10 @@ export const api = {
 
   // Legacy aliases
   getLeads: async (params?: string): Promise<{ leads: Lead[] }> => {
-    const raw = await apiFetch<any[]>(`/api/leads${params ? `?${params}` : ""}`);
+    const query = params?.trim()
+      ? (params.includes("demo_only=") ? params : `${params}&demo_only=true`)
+      : "demo_only=true";
+    const raw = await apiFetch<any[]>(`/api/leads?${query}`);
     const arr = Array.isArray(raw) ? raw : (raw as any).leads ?? [];
     return { leads: arr.map(normalizeLead) };
   },
