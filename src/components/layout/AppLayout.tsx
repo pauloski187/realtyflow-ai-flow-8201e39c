@@ -20,7 +20,8 @@ export default function AppLayout() {
   useEffect(() => {
     api.healthCheck()
       .then((data) => {
-        if (data.status === 'healthy') {
+        const status = String(data.status).toLowerCase();
+        if (status === 'healthy' || status === 'success' || status === 'ok') {
           setBackendStatus('connected');
         } else {
           setBackendStatus('disconnected');
